@@ -1,0 +1,21 @@
+﻿#version 330 core
+#一致性全局矩阵:
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+#来自顶点着色器的二向量
+in vec3 NormalforRGB;
+in vec3 PosforRGB;
+
+#向片元着色器输出向量:
+out vec4 FragColor;
+
+#主程序入口
+void main()
+{
+    FragColor = vec4(NormalforRGB,1.0)- vec4(PosforRGB,1.0); #使用法向量和位置向量合成RGBA
+    //FragColor = vec4(1.0,1.0,1.0,1.0)* model; #使用模型变换矩阵计算RGBA
+    //FragColor = vec4(0.8,0.2,0.8,1.0); #使用固定值作颜色
+    //FragColor = vec4(1.0); //{r,g,b,a}#统一用1.0填充
+}
