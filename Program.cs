@@ -9,13 +9,13 @@ namespace LearnOpenTK
         {
             var nativeWindowSettings = new NativeWindowSettings()
             {
-                Size = new Vector2i(1920, 1080),
-                Title = "OpenTK4.4.0 @No6-MultipleLights",
+                Size = new Vector2i(1920, 1080), //定义窗体宽度与高度
+                Title = "LearnOpenTK - Transformations",//定义窗体标题
             };
 
             using (var window = new Window(GameWindowSettings.Default, nativeWindowSettings))
             {
-                window.Run();
+                window.Run(); //启动窗体
             }
         }
     }
