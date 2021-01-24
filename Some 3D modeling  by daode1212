@@ -1,0 +1,1329 @@
+            Some mathematical algorithms of 3D modeling are taken from the code fragment in opentk, which can reduce STL or obj modeling,
+
+There is often no introduction in mathematics manual
+            
+            
+            #region  Six shuttle cone[六梭锥]---Algorithm designer  :  doade1212
+            //定义顶点(位置三维,纹理二维)
+            float[] _verSide6V = new float[]
+             {
+                // Position         Texture coordinates
+                 0,  0, 1, 0.5f, 0.5f,
+                 (float)(0.5*MathHelper.Cos(0*2*PI/6)),(float)(0.5*MathHelper.Sin(0*2*PI/6)), 0.0f, (float)(0.5+0.5*MathHelper.Cos(0*2*PI/6)),(float)(0.5+0.5*MathHelper.Sin(0*2*PI/6)),
+                 (float)(0.5*MathHelper.Cos(1*2*PI/6)),(float)(0.5*MathHelper.Sin(1*2*PI/6)), 0.0f, (float)(0.5+0.5*MathHelper.Cos(1*2*PI/6)),(float)(0.5+0.5*MathHelper.Sin(1*2*PI/6)),
+                 (float)(0.5*MathHelper.Cos(2*2*PI/6)),(float)(0.5*MathHelper.Sin(2*2*PI/6)), 0.0f, (float)(0.5+0.5*MathHelper.Cos(2*2*PI/6)),(float)(0.5+0.5*MathHelper.Sin(2*2*PI/6)),
+                 (float)(0.5*MathHelper.Cos(3*2*PI/6)),(float)(0.5*MathHelper.Sin(3*2*PI/6)), 0.0f, (float)(0.5+0.5*MathHelper.Cos(3*2*PI/6)),(float)(0.5+0.5*MathHelper.Sin(3*2*PI/6)),
+                 (float)(0.5*MathHelper.Cos(4*2*PI/6)),(float)(0.5*MathHelper.Sin(4*2*PI/6)), 0.0f, (float)(0.5+0.5*MathHelper.Cos(4*2*PI/6)),(float)(0.5+0.5*MathHelper.Sin(4*2*PI/6)),
+                 (float)(0.5*MathHelper.Cos(5*2*PI/6)),(float)(0.5*MathHelper.Sin(5*2*PI/6)), 0.0f, (float)(0.5+0.5*MathHelper.Cos(5*2*PI/6)),(float)(0.5+0.5*MathHelper.Sin(5*2*PI/6)),
+             };
+
+            //顶点之序号,取二个三角形拼成四边形: 
+            dlt = (uint)(vArrLen / 5);
+            uint[] _idxSide6V = new uint[]
+               {
+                 dlt+0, dlt+1, dlt+2,
+                 dlt+0, dlt+2, dlt+3,
+                 dlt+0, dlt+3, dlt+4,
+                 dlt+0, dlt+4, dlt+5,
+                 dlt+0, dlt+5, dlt+6,
+                 dlt+0, dlt+6, dlt+1
+               };
+            _verSide6V.CopyTo(_vertices, vArrLen);
+            _idxSide6V.CopyTo(_indices, iArrLen);
+            vArrLen += _verSide6V.Length; iArrLen += _idxSide6V.Length;
+            dLen.Add("side6V", _idxSide6V.Length); dPtr.Add("side6V", ptr);
+            ptr += (_idxSide6V.Length * 4);
+            #endregion
+
+            #region Sphere[球体]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5d1 = new Dictionary<P5D, int>();
+            int idx1 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = 0; i <= 60; i += 5)  //经线:0--360
+            {
+                for (int j = 0; j <= 30; j += 5) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 5*ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 5 * bk[s]) / 60f - PI / 2;//
+                        float x = (float)(1.0f * MathHelper.Cos(a) * MathHelper.Cos(b));//空间坐标x
+                        float y = (float)(1.0f * MathHelper.Sin(a) * MathHelper.Cos(b));//空间坐标y
+                        float z = (float)(1.0f * MathHelper.Sin(b));//空间坐标z
+                        float ta = (i - 5 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 5 * bk[s]) / 30f;//纹理坐标v
+                        p5d1.Add(new P5D(x, y, z, ta, tb), idx1);
+                        idx1++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[]  _verSphere = new float[5 * idx1];
+            uint h1 = 0;
+            foreach (var m in p5d1)
+            {
+                _verSphere[5 * h1 + 0] = m.Key._x;
+                _verSphere[5 * h1 + 1] = m.Key._y;
+                _verSphere[5 * h1 + 2] = m.Key._z;
+                _verSphere[5 * h1 + 3] = m.Key._u;
+                _verSphere[5 * h1 + 4] = m.Key._v;
+                h1++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxSphere= new uint[6 * idx1 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idx1 / 4; g++)
+            {
+                _idxSphere[6 * g + 0 ] = (uint)(4 * g + 0+dlt);
+                _idxSphere[6 * g + 1 ] = (uint)(4 * g + 1+ dlt);
+                _idxSphere[6 * g + 2 ] = (uint)(4 * g + 3+ dlt);
+                _idxSphere[6 * g + 3 ] = (uint)(4 * g + 1+ dlt);
+                _idxSphere[6 * g + 4 ] = (uint)(4 * g + 2+ dlt);
+                _idxSphere[6 * g + 5 ] = (uint)(4 * g + 3+ dlt);
+            }
+           _verSphere.CopyTo(_vertices, vArrLen);
+           _idxSphere.CopyTo(_indices, iArrLen); 
+            vArrLen += _verSphere.Length; iArrLen += _idxSphere.Length;
+            dLen.Add("sphere", _idxSphere.Length); dPtr.Add("sphere",ptr);
+            ptr +=(_idxSphere.Length * 4);
+            #endregion
+
+            #region Bar[柱,条,棒]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5d2 = new Dictionary<P5D, int>();
+            int idx2 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = 0; i < 60; i += 5)  //经线:0--360
+            {
+                for (int j = 0; j < 30; j += 5) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i + 5 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j + 5 * bk[s]) / 60f - PI / 2;//
+                        float x = (float)(0.5f * MathHelper.Cos(a));//空间坐标x 
+                        float y = (float)(0.5f * MathHelper.Sin(a));//空间坐标y
+                        float z = (b+ PI / 2)/PI;//空间坐标z
+                        float ta = (i + 5 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j + 5 * bk[s]) / 30f;//纹理坐标v
+                        p5d2.Add(new P5D(x, y, z, ta, tb), idx2);
+                        idx2++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verBar = new float[5 * idx2];
+            int h2 = 0;
+            foreach (var m in p5d2)
+            {
+                _verBar[5 * h2 + 0] = m.Key._x;
+                _verBar[5 * h2 + 1] = m.Key._y;
+                _verBar[5 * h2 + 2] = m.Key._z;
+                _verBar[5 * h2 + 3] = m.Key._u;
+                _verBar[5 * h2 + 4] = m.Key._v;
+                h2++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxBar= new uint[6 * idx2 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idx2 / 4; g++)
+            {
+                _idxBar[6 * g + 0] = (uint)(4 * g + 0+ dlt) ;
+                _idxBar[6 * g + 1 ] = (uint)(4 * g + 1+ dlt);
+                _idxBar[6 * g + 2 ] = (uint)(4 * g + 3+ dlt);
+                _idxBar[6 * g + 3 ] = (uint)(4 * g + 1+ dlt);
+                _idxBar[6 * g + 4 ] = (uint)(4 * g + 2+ dlt);
+                _idxBar[6 * g + 5 ] = (uint)(4 * g + 3+ dlt);
+            }
+            _verBar.CopyTo(_vertices, vArrLen);
+            _idxBar.CopyTo(_indices, iArrLen);
+            vArrLen += _verBar.Length; iArrLen += _idxBar.Length;
+            dLen.Add("bar", _idxBar.Length); dPtr.Add("bar", ptr);
+            ptr += (_idxBar.Length * 4);
+            #endregion
+
+            #region Ring[环]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5d3 = new Dictionary<P5D, int>();
+            int idx3 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = 1; i <= 60; i += 5)  //经线:0--360
+            {
+                for (int j = 1; j <= 60; j += 5) //纬线:-180--+180
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 5 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 5 * bk[s]) / 60f - PI / 2;//
+                        float x = (float)(1.0f * MathHelper.Cos(a) * (2+MathHelper.Cos(b)));//空间坐标x
+                        float y = (float)(1.0f * MathHelper.Sin(a) * (2+MathHelper.Cos(b)));//空间坐标y
+                        float z = (float)(1.0f * MathHelper.Sin(b));//空间坐标z
+                        float ta = (i - 5 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 5 * bk[s]) / 30f;//纹理坐标v
+                        p5d3.Add(new P5D(x, y, z, ta, tb), idx3);
+                        idx3++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verRing = new float[5 * idx3];
+            uint h3 = 0;
+            foreach (var m in p5d3)
+            {
+                _verRing[5 * h3 + 0] = m.Key._x;
+                _verRing[5 * h3 + 1] = m.Key._y;
+                _verRing[5 * h3 + 2] = m.Key._z;
+                _verRing[5 * h3 + 3] = m.Key._u;
+                _verRing[5 * h3 + 4] = m.Key._v;
+                h3++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxRing = new uint[6 * idx3 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idx3 / 4; g++)
+            {
+                _idxRing[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxRing[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxRing[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxRing[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxRing[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxRing[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verRing.CopyTo(_vertices, vArrLen);
+            _idxRing.CopyTo(_indices, iArrLen);
+            vArrLen += _verRing.Length; iArrLen += _idxRing.Length;
+            dLen.Add("ring", _idxRing.Length); dPtr.Add("ring", ptr);
+            ptr += (_idxRing.Length * 4);
+            #endregion
+
+            #region Rounded cube[圆角立方体]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5d4 = new Dictionary<P5D, int>();
+            int idx4 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = 0; i <= 60; i += 3)  //经线:0--360
+            {
+                for (int j = 0; j <= 30; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f - PI / 2;//
+                        float x = (float)(1.0f * MathHelper.Cos(a) * MathHelper.Cos(b));//空间坐标x
+                        float y = (float)(1.0f * MathHelper.Sin(a) * MathHelper.Cos(b));//空间坐标y
+                        float z = (float)(1.0f * MathHelper.Sin(b));//空间坐标z
+                        x = (float)(MathHelper.Sign(x) * MathHelper.Pow(x * x, 0.1));
+                        y = (float)(MathHelper.Sign(y) * MathHelper.Pow(y * y, 0.1));
+                        z = (float)(MathHelper.Sign(z) * MathHelper.Pow(z * z, 0.1));                        
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 30f;//纹理坐标v
+                        p5d4.Add(new P5D(x, y, z, ta, tb), idx4);
+                        idx4++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verCube = new float[5 * idx4];
+            uint h4 = 0;
+            foreach (var m in p5d4)
+            {
+                _verCube[5 * h4 + 0] = m.Key._x;
+                _verCube[5 * h4 + 1] = m.Key._y;
+                _verCube[5 * h4 + 2] = m.Key._z;
+                _verCube[5 * h4 + 3] = m.Key._u;
+                _verCube[5 * h4 + 4] = m.Key._v;
+                h4++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxCube = new uint[6 * idx4 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idx4 / 4; g++)
+            {
+                _idxCube[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxCube[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxCube[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxCube[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxCube[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxCube[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verCube.CopyTo(_vertices, vArrLen);
+            _idxCube.CopyTo(_indices, iArrLen);
+            vArrLen += _verCube.Length; iArrLen += _idxCube.Length;
+            dLen.Add("cube", _idxCube.Length); dPtr.Add("cube", ptr);
+            ptr += (_idxCube.Length * 4);
+            #endregion
+
+            #region Capsule[胶囊]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5d5 = new Dictionary<P5D, int>();
+            int idx5 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = 0; i <= 60; i += 3)  //经线:0--360
+            {
+                for (int j = 3; j <= 30; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f - PI / 2;//
+                        float x = (float)(1.0f * MathHelper.Cos(a) * MathHelper.Cos(b));//空间坐标x
+                        float y = (float)(1.0f * MathHelper.Sin(a) * MathHelper.Cos(b));//空间坐标y
+                        float z = (float)(1.0f * MathHelper.Sin(b));//空间坐标z
+                        z=z>=0?z+1.25f:z-1.25f;                       
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 30f;//纹理坐标v
+                        p5d5.Add(new P5D(x, y, z, ta, tb), idx5);
+                        idx5++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verCapsule = new float[5 * idx5];
+            uint h5 = 0;
+            foreach (var m in p5d5)
+            {
+                _verCapsule[5 * h5 + 0] = m.Key._x;
+                _verCapsule[5 * h5 + 1] = m.Key._y;
+                _verCapsule[5 * h5 + 2] = m.Key._z;
+                _verCapsule[5 * h5 + 3] = m.Key._u;
+                _verCapsule[5 * h5 + 4] = m.Key._v;
+                h5++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxCapsule = new uint[6 * idx5 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idx5 / 4; g++)
+            {
+                _idxCapsule[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxCapsule[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxCapsule[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxCapsule[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxCapsule[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxCapsule[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verCapsule.CopyTo(_vertices, vArrLen);
+            _idxCapsule.CopyTo(_indices, iArrLen);
+            vArrLen += _verCapsule.Length; iArrLen += _idxCapsule.Length;
+            dLen.Add("capsule", _idxCapsule.Length); dPtr.Add("capsule", ptr);
+            ptr += (_idxCapsule.Length * 4);
+            #endregion
+
+
+            /*=====================以下采用统一采用形如"Obj33,...,Obj99"方式命名=============================*/
+
+            #region Obj06[Spiral tube,螺旋管]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj06 = new Dictionary<P5D, int>();
+            int idxObj06 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = 0; i <= 4*60; i += 3)  //经线:0--360
+            {
+                for (int j = -30; j <= 30; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f - PI / 2;//
+                        float x = (float)(0.5 * MathHelper.Cos(a) * (MathHelper.Cos(b)+2));//空间坐标x
+                        float y = (float)(0.5 * MathHelper.Sin(a) * (MathHelper.Cos(b)+2));//空间坐标y
+                        float z = (float)(a/6 + 0.5*MathHelper.Sin(b));//空间坐标z
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 30f;//纹理坐标v
+                        p5dObj06.Add(new P5D(x, y, z, ta, tb), idxObj06);
+                        idxObj06++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj06 = new float[5 * idxObj06];
+            uint hObj06 = 0;
+            foreach (var m in p5dObj06)
+            {
+                _verObj06[5 * hObj06 + 0] = m.Key._x;
+                _verObj06[5 * hObj06 + 1] = m.Key._y;
+                _verObj06[5 * hObj06 + 2] = m.Key._z;
+                _verObj06[5 * hObj06 + 3] = m.Key._u;
+                _verObj06[5 * hObj06 + 4] = m.Key._v;
+                hObj06++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj06 = new uint[6 * idxObj06 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj06 / 4; g++)
+            {
+                _idxObj06[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj06[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj06[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj06[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj06[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj06[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj06.CopyTo(_vertices, vArrLen);
+            _idxObj06.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj06.Length; iArrLen += _idxObj06.Length;
+            dLen.Add("Obj06", _idxObj06.Length); dPtr.Add("Obj06", ptr);//顶点索引加入字典,
+            ptr += (_idxObj06.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj07[Helix band,螺旋带]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj07 = new Dictionary<P5D, int>();
+            int idxObj07 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -21; i <= 4 * 60+21; i += 3)  //经线:0--360
+            {
+                for (int j = -30; j <= 30; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f - PI / 2;//
+                        float x = (float)(0.5 * MathHelper.Cos(a));//空间坐标x 
+                        float y = (float)(0.5 * MathHelper.Sin(a));//空间坐标y
+                        float z = (float)(a / 6 + 0.6 * MathHelper.Sin(b));//空间坐标z
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 30f;//纹理坐标v
+                        if (z < 0) z = 0;//下部切平
+                        if (z > 4) z = 4;//上部切平
+                        p5dObj07.Add(new P5D(x/4, y/4, z/4, ta, tb), idxObj07);
+                        idxObj07++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj07 = new float[5 * idxObj07];
+            uint hObj07 = 0;
+            foreach (var m in p5dObj07)
+            {
+                _verObj07[5 * hObj07 + 0] = m.Key._x;
+                _verObj07[5 * hObj07 + 1] = m.Key._y;
+                _verObj07[5 * hObj07 + 2] = m.Key._z;
+                _verObj07[5 * hObj07 + 3] = m.Key._u;
+                _verObj07[5 * hObj07 + 4] = m.Key._v;
+                hObj07++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj07 = new uint[6 * idxObj07 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj07 / 4; g++)
+            {
+                _idxObj07[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj07[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj07[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj07[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj07[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj07[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj07.CopyTo(_vertices, vArrLen);
+            _idxObj07.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj07.Length; iArrLen += _idxObj07.Length;
+            dLen.Add("Obj07", _idxObj07.Length); dPtr.Add("Obj07", ptr);//顶点索引加入字典,
+            ptr += (_idxObj07.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj08[Round square tube,圆角方管]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj08 = new Dictionary<P5D, int>();
+            int idxObj08 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = 0; i <=  60; i += 3)  //经线:0--360
+            {
+                for (int j = 6; j <= 60; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = (float)MathHelper.Atan2(MathHelper.Cos(a) ,1);// 空间坐标x 
+                        float y = (float)MathHelper.Atan2(MathHelper.Sin(a) ,1 );// 空间坐标y
+                        float z = 2*PI-b;//空间坐标z  
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 60f;//纹理坐标v
+                        p5dObj08.Add(new P5D(x / 4, y / 4, z / 6, ta, tb), idxObj08);
+                        idxObj08++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj08 = new float[5 * idxObj08];
+            uint hObj08 = 0;
+            foreach (var m in p5dObj08)
+            {
+                _verObj08[5 * hObj08 + 0] = m.Key._x;
+                _verObj08[5 * hObj08 + 1] = m.Key._y;
+                _verObj08[5 * hObj08 + 2] = m.Key._z;
+                _verObj08[5 * hObj08 + 3] = m.Key._u;
+                _verObj08[5 * hObj08 + 4] = m.Key._v;
+                hObj08++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj08 = new uint[6 * idxObj08 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj08 / 4; g++)
+            {
+                _idxObj08[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj08[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj08[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj08[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj08[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj08[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj08.CopyTo(_vertices, vArrLen);
+            _idxObj08.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj08.Length; iArrLen += _idxObj08.Length;
+            dLen.Add("Obj08", _idxObj08.Length); dPtr.Add("Obj08", ptr);//顶点索引加入字典,
+            ptr += (_idxObj08.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj09[Missile,导弹]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj09 = new Dictionary<P5D, int>();
+            int idxObj09 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = 0; i <= 60; i += 3)  //经线:0--360
+            {
+                for (int j = 0; j <= 60; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = (float)MathHelper.Atan2(MathHelper.Cos(a), MathHelper.Cos(b));//   空间坐标x 
+                        float y = (float)MathHelper.Atan2(MathHelper.Sin(a), MathHelper.Cos(b));//  空间坐标y
+                        float z = 2 * PI - b;//空间坐标z  
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 60f;//纹理坐标v
+                        p5dObj09.Add(new P5D(x / 4, y / 4, z / 2, ta, tb), idxObj09);
+                        idxObj09++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj09 = new float[5 * idxObj09];
+            uint hObj09 = 0;
+            foreach (var m in p5dObj09)
+            {
+                _verObj09[5 * hObj09 + 0] = m.Key._x;
+                _verObj09[5 * hObj09 + 1] = m.Key._y;
+                _verObj09[5 * hObj09 + 2] = m.Key._z;
+                _verObj09[5 * hObj09 + 3] = m.Key._u;
+                _verObj09[5 * hObj09 + 4] = m.Key._v;
+                hObj09++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj09 = new uint[6 * idxObj09 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj09 / 4; g++)
+            {
+                _idxObj09[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj09[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj09[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj09[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj09[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj09[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj09.CopyTo(_vertices, vArrLen);
+            _idxObj09.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj09.Length; iArrLen += _idxObj09.Length;
+            dLen.Add("Obj09", _idxObj09.Length); dPtr.Add("Obj09", ptr);//顶点索引加入字典,
+            ptr += (_idxObj09.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj10[Two legged table,二脚桌]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj10 = new Dictionary<P5D, int>();
+            int idxObj10 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -39; i <= 42; i += 3)  //经线:0--360
+            {
+                for (int j = 0; j <=57; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = (float)(MathHelper.Cos(a)*(MathHelper.Cos(b)+5));//   空间坐标x 
+                        float y = (float)(MathHelper.Sin(a)* (MathHelper.Cos(b)+5));//  空间坐标y
+                        float z = (float)(a+MathHelper.Sin(b)); //空间坐标z  
+
+                        float x2 = (float)(MathHelper.Sign(x) * MathHelper.Pow(x * x, 0.05));//   空间坐标x 
+                        float y2 = (float)(MathHelper.Sign(y) * MathHelper.Pow(y * y, 0.05));//  空间坐标y
+                        float z2 = (float)(MathHelper.Sign(z) * MathHelper.Pow(z * z, 0.05)); //空间坐标z                        
+                        
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 60f;//纹理坐标v
+                        p5dObj10.Add(new P5D(z2 / 4, y2 / 4, x2 /4, ta, tb), idxObj10);
+                        idxObj10++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj10 = new float[5 * idxObj10];
+            uint hObj10 = 0;
+            foreach (var m in p5dObj10)
+            {
+                _verObj10[5 * hObj10 + 0] = m.Key._x;
+                _verObj10[5 * hObj10 + 1] = m.Key._y;
+                _verObj10[5 * hObj10 + 2] = m.Key._z;
+                _verObj10[5 * hObj10 + 3] = m.Key._u;
+                _verObj10[5 * hObj10 + 4] = m.Key._v;
+                hObj10++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj10 = new uint[6 * idxObj10 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj10 / 4; g++)
+            {
+                _idxObj10[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj10[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj10[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj10[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj10[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj10[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj10.CopyTo(_vertices, vArrLen);
+            _idxObj10.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj10.Length; iArrLen += _idxObj10.Length;
+            dLen.Add("Obj10", _idxObj10.Length); dPtr.Add("Obj10", ptr);//顶点索引加入字典,
+            ptr += (_idxObj10.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj11[Four legged table,四脚桌]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj11 = new Dictionary<P5D, int>();
+            int idxObj11 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -27; i <= 30; i += 3)  //经线:0--360
+            {
+                for (int j = -27; j <= 30; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = (float)(a/(1f+a*a));//   空间坐标x 
+                        float y = (float)(b/(1f+b*b));//  空间坐标y
+                        float z = 0.6f-MathHelper.Abs(a*b/9f);//空间坐标z  
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 60f;//纹理坐标v
+                        p5dObj11.Add(new P5D(x, y, z, ta, tb), idxObj11);
+                        idxObj11++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj11 = new float[5 * idxObj11];
+            uint hObj11 = 0;
+            foreach (var m in p5dObj11)
+            {
+                _verObj11[5 * hObj11 + 0] = m.Key._x;
+                _verObj11[5 * hObj11 + 1] = m.Key._y;
+                _verObj11[5 * hObj11 + 2] = m.Key._z;
+                _verObj11[5 * hObj11 + 3] = m.Key._u;
+                _verObj11[5 * hObj11 + 4] = m.Key._v;
+                hObj11++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj11 = new uint[6 * idxObj11 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj11 / 4; g++)
+            {
+                _idxObj11[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj11[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj11[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj11[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj11[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj11[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj11.CopyTo(_vertices, vArrLen);
+            _idxObj11.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj11.Length; iArrLen += _idxObj11.Length;
+            dLen.Add("Obj11", _idxObj11.Length); dPtr.Add("Obj11", ptr);//顶点索引加入字典,
+            ptr += (_idxObj11.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj12[Exp-Knapsack,EXP背包]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj12 = new Dictionary<P5D, int>();
+            int idxObj12 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -24; i <= 24; i += 3)  //经线:0--360
+            {
+                for (int j = -24; j <= 24; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = a * (float)MathHelper.Exp(-a * a / 2f);//   空间坐标x 
+                        float y = b * (float)MathHelper.Exp(-b * b / 2f);//  空间坐标y
+                        float z =(float)(MathHelper.Exp(-a*a)*MathHelper.Exp(-b * b)) ;//空间坐标z  
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 60f;//纹理坐标v
+                        p5dObj12.Add(new P5D(x, y, z, ta, tb), idxObj12);
+                        idxObj12++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj12 = new float[5 * idxObj12];
+            uint hObj12 = 0;
+            foreach (var m in p5dObj12)
+            {
+                _verObj12[5 * hObj12 + 0] = m.Key._x;
+                _verObj12[5 * hObj12 + 1] = m.Key._y;
+                _verObj12[5 * hObj12 + 2] = m.Key._z;
+                _verObj12[5 * hObj12 + 3] = m.Key._u;
+                _verObj12[5 * hObj12 + 4] = m.Key._v;
+                hObj12++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj12 = new uint[6 * idxObj12 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj12 / 4; g++)
+            {
+                _idxObj12[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj12[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj12[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj12[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj12[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj12[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj12.CopyTo(_vertices, vArrLen);
+            _idxObj12.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj12.Length; iArrLen += _idxObj12.Length;
+            dLen.Add("Obj12", _idxObj12.Length); dPtr.Add("Obj12", ptr);//顶点索引加入字典,
+            ptr += (_idxObj12.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj13[Exp-Starfish,EXP海星]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj13 = new Dictionary<P5D, int>();
+            int idxObj13 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -24; i <= 27; i += 3)  //经线:0--360
+            {
+                for (int j = -24; j <= 27; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = b * (float)MathHelper.Exp(-a * a / 2f);//   空间坐标x 
+                        float y = a * (float)MathHelper.Exp(-b * b / 2f);//  空间坐标y
+                        float z = (float)(MathHelper.Exp(-a * a) * MathHelper.Exp(-b * b));//空间坐标z  
+                        float ta =.5f+ (i - 3 * ak[s]) / 30f;//纹理坐标u
+                        float tb =.5f+ (j - 3 * bk[s]) / 30f;//纹理坐标v
+                        p5dObj13.Add(new P5D(x, y, z, ta, tb), idxObj13);
+                        idxObj13++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj13 = new float[5 * idxObj13];
+            uint hObj13 = 0;
+            foreach (var m in p5dObj13)
+            {
+                _verObj13[5 * hObj13 + 0] = m.Key._x;
+                _verObj13[5 * hObj13 + 1] = m.Key._y;
+                _verObj13[5 * hObj13 + 2] = m.Key._z;
+                _verObj13[5 * hObj13 + 3] = m.Key._u;
+                _verObj13[5 * hObj13 + 4] = m.Key._v;
+                hObj13++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj13 = new uint[6 * idxObj13 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj13 / 4; g++)
+            {
+                _idxObj13[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj13[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj13[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj13[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj13[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj13[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj13.CopyTo(_vertices, vArrLen);
+            _idxObj13.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj13.Length; iArrLen += _idxObj13.Length;
+            dLen.Add("Obj13", _idxObj13.Length); dPtr.Add("Obj13", ptr);//顶点索引加入字典,
+            ptr += (_idxObj13.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj14[Four leaf flower,四叶花]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj14 = new Dictionary<P5D, int>();
+            int idxObj14 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -24; i <= 27; i += 3)  //经线:0--360
+            {
+                for (int j = -24; j <= 27; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = b * (float)MathHelper.Pow(a * a , .2f);//   空间坐标x 
+                        float y = a * (float)MathHelper.Pow(b * b , .2f);//  空间坐标y
+                        float z = (float)(1/MathHelper.Cosh(a * a+b * b));//空间坐标z  
+                        float ta = .5f + (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = .5f + (j - 3 * bk[s]) / 60f;//纹理坐标v
+                        p5dObj14.Add(new P5D(x, y, z, ta, tb), idxObj14);
+                        idxObj14++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj14 = new float[5 * idxObj14];
+            uint hObj14 = 0;
+            foreach (var m in p5dObj14)
+            {
+                _verObj14[5 * hObj14 + 0] = m.Key._x;
+                _verObj14[5 * hObj14 + 1] = m.Key._y;
+                _verObj14[5 * hObj14 + 2] = m.Key._z;
+                _verObj14[5 * hObj14 + 3] = m.Key._u;
+                _verObj14[5 * hObj14 + 4] = m.Key._v;
+                hObj14++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj14 = new uint[6 * idxObj14 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj14 / 4; g++)
+            {
+                _idxObj14[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj14[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj14[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj14[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj14[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj14[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj14.CopyTo(_vertices, vArrLen);
+            _idxObj14.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj14.Length; iArrLen += _idxObj14.Length;
+            dLen.Add("Obj14", _idxObj14.Length); dPtr.Add("Obj14", ptr);//顶点索引加入字典,
+            ptr += (_idxObj14.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj15[Goldfish,金鱼]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj15 = new Dictionary<P5D, int>();
+            int idxObj15 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -24; i <= 27; i += 3)  //经线:0--360
+            {
+                for (int j = -24; j <= 27; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 100f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 50f;//
+                        float x = (float)MathHelper.Atan(MathHelper.Cos(a)+ MathHelper.Cos(b));//   空间坐标x 
+                        float y = (float)MathHelper.Atan(MathHelper.Sin(a)+ MathHelper.Cos(b));//  空间坐标y
+                        float z = (float)(a*b/6f+ .5*MathHelper.Sin(b)); ;//空间坐标z  
+                        float ta =.5f+ (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb =.5f+ (j - 3 * bk[s]) / 60f;//纹理坐标v
+                        p5dObj15.Add(new P5D(x, y, z, ta, tb), idxObj15);
+                        idxObj15++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj15 = new float[5 * idxObj15];
+            uint hObj15 = 0;
+            foreach (var m in p5dObj15)
+            {
+                _verObj15[5 * hObj15 + 0] = m.Key._x;
+                _verObj15[5 * hObj15 + 1] = m.Key._y;
+                _verObj15[5 * hObj15 + 2] = m.Key._z;
+                _verObj15[5 * hObj15 + 3] = m.Key._u;
+                _verObj15[5 * hObj15 + 4] = m.Key._v;
+                hObj15++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj15 = new uint[6 * idxObj15 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj15 / 4; g++)
+            {
+                _idxObj15[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj15[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj15[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj15[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj15[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj15[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj15.CopyTo(_vertices, vArrLen);
+            _idxObj15.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj15.Length; iArrLen += _idxObj15.Length;
+            dLen.Add("Obj15", _idxObj15.Length); dPtr.Add("Obj15", ptr);//顶点索引加入字典,
+            ptr += (_idxObj15.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj16[Pliers,钳子]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj16 = new Dictionary<P5D, int>();
+            int idxObj16 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -24; i <= 27; i += 3)  //经线:0--360
+            {
+                for (int j = -24; j <= 27; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = (float)(a / (a* a+1));//   空间坐标x 
+                        float y = (float)(b / (b*b+1));//  空间坐标y
+                        float z = (float)MathHelper.Exp(a * b/2f);//空间坐标z  
+                        float ta = (i - 3 * ak[s]) / 3f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 3f;//纹理坐标v
+                        z = z > 5 ? 5 : z;
+                        p5dObj16.Add(new P5D(x, y, z, ta, tb), idxObj16);
+                        idxObj16++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj16 = new float[5 * idxObj16];
+            uint hObj16 = 0;
+            foreach (var m in p5dObj16)
+            {
+                _verObj16[5 * hObj16 + 0] = m.Key._x;
+                _verObj16[5 * hObj16 + 1] = m.Key._y;
+                _verObj16[5 * hObj16 + 2] = m.Key._z;
+                _verObj16[5 * hObj16 + 3] = m.Key._u;
+                _verObj16[5 * hObj16 + 4] = m.Key._v;
+                hObj16++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj16 = new uint[6 * idxObj16 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj16 / 4; g++)
+            {
+                _idxObj16[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj16[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj16[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj16[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj16[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj16[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj16.CopyTo(_vertices, vArrLen);
+            _idxObj16.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj16.Length; iArrLen += _idxObj16.Length;
+            dLen.Add("Obj16", _idxObj16.Length); dPtr.Add("Obj16", ptr);//顶点索引加入字典,
+            ptr += (_idxObj16.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj17[Star anise,八角刺]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj17 = new Dictionary<P5D, int>();
+            int idxObj17 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -24; i <= 27; i += 3)  //经线:0--360
+            {
+                for (int j = -24; j <= 27; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = b *( (float)MathHelper.Log(.1f+a*a));//   空间坐标x 
+                        float y = a *( (float)MathHelper.Log(.1f+b*b));//  空间坐标y
+                        float z = (float)(a*b);//空间坐标z  
+                        float ta = (i - 3 * ak[s]) / 30f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 30f;//纹理坐标v
+                        p5dObj17.Add(new P5D(x, y, z, ta, tb), idxObj17);
+                        idxObj17++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj17 = new float[5 * idxObj17];
+            uint hObj17 = 0;
+            foreach (var m in p5dObj17)
+            {
+                _verObj17[5 * hObj17 + 0] = m.Key._x;
+                _verObj17[5 * hObj17 + 1] = m.Key._y;
+                _verObj17[5 * hObj17 + 2] = m.Key._z;
+                _verObj17[5 * hObj17 + 3] = m.Key._u;
+                _verObj17[5 * hObj17 + 4] = m.Key._v;
+                hObj17++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj17 = new uint[6 * idxObj17 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj17 / 4; g++)
+            {
+                _idxObj17[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj17[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj17[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj17[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj17[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj17[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj17.CopyTo(_vertices, vArrLen);
+            _idxObj17.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj17.Length; iArrLen += _idxObj17.Length;
+            dLen.Add("Obj17", _idxObj17.Length); dPtr.Add("Obj17", ptr);//顶点索引加入字典,
+            ptr += (_idxObj17.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj18[Quadruped table,四足工作台]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj18 = new Dictionary<P5D, int>();
+            int idxObj18 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -24; i <= 27; i += 3)  //经线:0--360
+            {
+                for (int j = -24; j <= 27; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = b *(a*a-1)/(a*a+1);//   空间坐标x 
+                        float y = a *(b*b-1)/(b*b+1);//  空间坐标y
+                        float z = (float)(3.9-0.5*MathHelper.Abs(a * b));//空间坐标z  
+                        float ta = (i - 3 * ak[s]) / 30f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 30f;//纹理坐标v
+                        p5dObj18.Add(new P5D(x, y, z, ta, tb), idxObj18);
+                        idxObj18++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj18 = new float[5 * idxObj18];
+            uint hObj18 = 0;
+            foreach (var m in p5dObj18)
+            {
+                _verObj18[5 * hObj18 + 0] = m.Key._x;
+                _verObj18[5 * hObj18 + 1] = m.Key._y;
+                _verObj18[5 * hObj18 + 2] = m.Key._z;
+                _verObj18[5 * hObj18 + 3] = m.Key._u;
+                _verObj18[5 * hObj18 + 4] = m.Key._v;
+                hObj18++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj18 = new uint[6 * idxObj18 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj18 / 4; g++)
+            {
+                _idxObj18[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj18[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj18[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj18[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj18[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj18[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj18.CopyTo(_vertices, vArrLen);
+            _idxObj18.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj18.Length; iArrLen += _idxObj18.Length;
+            dLen.Add("Obj18", _idxObj18.Length); dPtr.Add("Obj18", ptr);//顶点索引加入字典,
+            ptr += (_idxObj18.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj19[Outer inner ring,外方内圆环]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj19 = new Dictionary<P5D, int>();
+            int idxObj19 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -30; i < 30; i += 3)  //经线:0--360
+            {
+                for (int j = -30; j < 30; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = (float)MathHelper.Atan2( MathHelper.Cos(a) , MathHelper.Sin(b));//空间坐标x
+                        float y = (float)MathHelper.Atan2( MathHelper.Sin(a) , MathHelper.Sin(b));//空间坐标y
+                        float z = (float)( MathHelper.Cos(b));//空间坐标z
+                        float ta = (i - 3 * ak[s]) / 60f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 60f;//纹理坐标v
+                        p5dObj19.Add(new P5D(x, y, z, ta, tb), idxObj19);
+                        idxObj19++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj19 = new float[5 * idxObj19];
+            uint hObj19 = 0;
+            foreach (var m in p5dObj19)
+            {
+                _verObj19[5 * hObj19 + 0] = m.Key._x;
+                _verObj19[5 * hObj19 + 1] = m.Key._y;
+                _verObj19[5 * hObj19 + 2] = m.Key._z;
+                _verObj19[5 * hObj19 + 3] = m.Key._u;
+                _verObj19[5 * hObj19 + 4] = m.Key._v;
+                hObj19++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj19 = new uint[6 * idxObj19 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj19 / 4; g++)
+            {
+                _idxObj19[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj19[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj19[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj19[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj19[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj19[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj19.CopyTo(_vertices, vArrLen);
+            _idxObj19.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj19.Length; iArrLen += _idxObj19.Length;
+            dLen.Add("Obj19", _idxObj19.Length); dPtr.Add("Obj19", ptr);//顶点索引加入字典,
+            ptr += (_idxObj19.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj20[Vase,花瓶]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj20 = new Dictionary<P5D, int>();
+            int idxObj20 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -30; i <= 33; i += 3)  //经线:0--360
+            {
+                for (int j = -30; j <= 30; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = (float)(MathHelper.Cos(a)* (MathHelper.Sin(b)+2));//空间坐标x
+                        float y = (float)(MathHelper.Sin(a)* (MathHelper.Sin(b)+2));//空间坐标y
+                        float z = (float)(b*MathHelper.Cos(b-0.25));//空间坐标z
+                        float ta = (i - 3 * ak[s]) / 30f;//纹理坐标u
+                        float tb = (j - 3 * bk[s]) / 30f;//纹理坐标v
+                        p5dObj20.Add(new P5D(x, y, z, ta, tb), idxObj20);
+                        idxObj20++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj20 = new float[5 * idxObj20];
+            uint hObj20 = 0;
+            foreach (var m in p5dObj20)
+            {
+                _verObj20[5 * hObj20 + 0] = m.Key._x;
+                _verObj20[5 * hObj20 + 1] = m.Key._y;
+                _verObj20[5 * hObj20 + 2] = m.Key._z;
+                _verObj20[5 * hObj20 + 3] = m.Key._u;
+                _verObj20[5 * hObj20 + 4] = m.Key._v;
+                hObj20++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj20 = new uint[6 * idxObj20 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj20 / 4; g++)
+            {
+                _idxObj20[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj20[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj20[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj20[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj20[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj20[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj20.CopyTo(_vertices, vArrLen);
+            _idxObj20.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj20.Length; iArrLen += _idxObj20.Length;
+            dLen.Add("Obj20", _idxObj20.Length); dPtr.Add("Obj20", ptr);//顶点索引加入字典,
+            ptr += (_idxObj20.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj21[Pillow,抱枕]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj21 = new Dictionary<P5D, int>();
+            int idxObj21 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -27; i <= 27; i += 3)  //经线:0--360
+            {
+                for (int j = -27; j <= 30; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x =  (float)MathHelper.Sin(a);//   空间坐标x 
+                        float y =  (float)MathHelper.Cos(b);//  空间坐标y
+                        float z = (float)(MathHelper.Sin(b)*MathHelper.Cos(a)/2);//空间坐标z  
+                        float ta = .5f + (i - 3 * ak[s]) / 3f;//纹理坐标u
+                        float tb = .5f + (j - 3 * bk[s]) / 3f;//纹理坐标v
+                        p5dObj21.Add(new P5D(x, y, z, ta, tb), idxObj21);
+                        idxObj21++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj21 = new float[5 * idxObj21];
+            uint hObj21 = 0;
+            foreach (var m in p5dObj21)
+            {
+                _verObj21[5 * hObj21 + 0] = m.Key._x;
+                _verObj21[5 * hObj21 + 1] = m.Key._y;
+                _verObj21[5 * hObj21 + 2] = m.Key._z;
+                _verObj21[5 * hObj21 + 3] = m.Key._u;
+                _verObj21[5 * hObj21 + 4] = m.Key._v;
+                hObj21++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj21 = new uint[6 * idxObj21 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj21 / 4; g++)
+            {
+                _idxObj21[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj21[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj21[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj21[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj21[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj21[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj21.CopyTo(_vertices, vArrLen);
+            _idxObj21.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj21.Length; iArrLen += _idxObj21.Length;
+            dLen.Add("Obj21", _idxObj21.Length); dPtr.Add("Obj21", ptr);//顶点索引加入字典,
+            ptr += (_idxObj21.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj22[Small iron stool,铁皮小凳]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj22 = new Dictionary<P5D, int>();
+            int idxObj22 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -18; i <= 21; i += 3)  //经线:0--360
+            {
+                for (int j = -18; j <= 21; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = a;//   空间坐标x 
+                        float y = b;//  空间坐标y
+                        float z = (float)(4.5-MathHelper.Pow(a * a * a * a + b * b * b * b, 3) / 12000f);//空间坐标z  
+                        z = z <0 ? 0 : z;
+                        float ta = .5f + (i - 3 * ak[s]) / 3f;//纹理坐标u
+                        float tb = .5f + (j - 3 * bk[s]) / 3f;//纹理坐标v
+                        p5dObj22.Add(new P5D(x, y, z, ta, tb), idxObj22);
+                        idxObj22++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj22 = new float[5 * idxObj22];
+            uint hObj22 = 0;
+            foreach (var m in p5dObj22)
+            {
+                _verObj22[5 * hObj22 + 0] = m.Key._x;
+                _verObj22[5 * hObj22 + 1] = m.Key._y;
+                _verObj22[5 * hObj22 + 2] = m.Key._z;
+                _verObj22[5 * hObj22 + 3] = m.Key._u;
+                _verObj22[5 * hObj22 + 4] = m.Key._v;
+                hObj22++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj22 = new uint[6 * idxObj22 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj22 / 4; g++)
+            {
+                _idxObj22[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj22[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj22[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj22[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj22[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj22[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj22.CopyTo(_vertices, vArrLen);
+            _idxObj22.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj22.Length; iArrLen += _idxObj22.Length;
+            dLen.Add("Obj22", _idxObj22.Length); dPtr.Add("Obj22", ptr);//顶点索引加入字典,
+            ptr += (_idxObj22.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj23[Gear,齿轮]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj23 = new Dictionary<P5D, int>();
+            int idxObj23 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -30; i <= 30; i += 1)  //经线:0--360
+            {
+                for (int j = -30; j <= 30; j += 1) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = (float)((1 + (i % 5 > 3 ? 2 : 0) / 10f) * MathHelper.Cos(a) * MathHelper.Cos(b));//   空间坐标x 
+                        float y = (float)((1 + (i % 5 > 3 ? 2 : 0) / 10f) * MathHelper.Sin(a) * MathHelper.Cos(b ));//  空间坐标y
+                        float z = (float)(MathHelper.Sin(b));//空间坐标z  
+                        z = z  < 0.25 ? z : 0;z = z  > -0.25 ? z : 0;
+                        float ta = .5f + (i - 3 * ak[s]) / 30f;//纹理坐标u
+                        float tb = .5f + (j - 3 * bk[s]) / 30f;//纹理坐标v
+                        p5dObj23.Add(new P5D(x, y, z, ta, tb), idxObj23);
+                        idxObj23++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj23 = new float[5 * idxObj23];
+            uint hObj23 = 0;
+            foreach (var m in p5dObj23)
+            {
+                _verObj23[5 * hObj23 + 0] = m.Key._x;
+                _verObj23[5 * hObj23 + 1] = m.Key._y;
+                _verObj23[5 * hObj23 + 2] = m.Key._z;
+                _verObj23[5 * hObj23 + 3] = m.Key._u;
+                _verObj23[5 * hObj23 + 4] = m.Key._v;
+                hObj23++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj23 = new uint[6 * idxObj23 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj23 / 4; g++)
+            {
+                _idxObj23[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj23[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj23[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj23[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj23[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj23[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj23.CopyTo(_vertices, vArrLen);
+            _idxObj23.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj23.Length; iArrLen += _idxObj23.Length;
+            dLen.Add("Obj23", _idxObj23.Length); dPtr.Add("Obj23", ptr);//顶点索引加入字典,
+            ptr += (_idxObj23.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            #region Obj24[Folding stool,折叠小凳]---Algorithm designer  :  doade1212
+            //顶点赋值:
+            Dictionary<P5D, int> p5dObj24 = new Dictionary<P5D, int>();
+            int idxObj24 = 0;//顶点数目,每一顶点为五维数(x,y,z,u,v)
+            for (int i = -24; i <= 24; i += 3)  //经线:0--360
+            {
+                for (int j = -21; j <= 24; j += 3) //纬线:-90--+90
+                {
+                    for (int s = 0; s < 4; s++)
+                    {
+                        float a = 2 * PI * (i - 3 * ak[s]) / 60f;//
+                        float b = 2 * PI * (j - 3 * bk[s]) / 60f;//
+                        float x = (float)(MathHelper.Cosh(a) * MathHelper.Cos(b));//   空间坐标x 
+                        float y = (float)(MathHelper.Sinh(a) * MathHelper.Cos(b));//  空间坐标y
+                        float z = (float)(MathHelper.Sin(b));//空间坐标z 
+                        x = MathHelper.Sign(x) * (float)MathHelper.Pow(MathHelper.Abs(x), 0.1);//   空间坐标x 
+                        y = MathHelper.Sign(y) * (float)MathHelper.Pow(MathHelper.Abs(y), 0.1); //  空间坐标y
+                        float ta = .5f + (i - 3 * ak[s]) / 3f;//纹理坐标u
+                        float tb = .5f + (j - 3 * bk[s]) / 3f;//纹理坐标v
+                        p5dObj24.Add(new P5D(x, y, z, ta, tb), idxObj24);
+                        idxObj24++;
+                    }
+                }
+            }
+            //顶点字典数据--->转数组 float[] _vertices
+            float[] _verObj24 = new float[5 * idxObj24];
+            uint hObj24 = 0;
+            foreach (var m in p5dObj24)
+            {
+                _verObj24[5 * hObj24 + 0] = m.Key._x;
+                _verObj24[5 * hObj24 + 1] = m.Key._y;
+                _verObj24[5 * hObj24 + 2] = m.Key._z;
+                _verObj24[5 * hObj24 + 3] = m.Key._u;
+                _verObj24[5 * hObj24 + 4] = m.Key._v;
+                hObj24++;
+            }
+            //顶点序号赋值(6个序号来自四边形的四个顶点):
+            uint[] _idxObj24 = new uint[6 * idxObj24 / 4];
+            dlt = (uint)(vArrLen / 5);
+            for (int g = 0; g < idxObj24 / 4; g++)
+            {
+                _idxObj24[6 * g + 0] = (uint)(4 * g + 0 + dlt);
+                _idxObj24[6 * g + 1] = (uint)(4 * g + 1 + dlt);
+                _idxObj24[6 * g + 2] = (uint)(4 * g + 3 + dlt);
+                _idxObj24[6 * g + 3] = (uint)(4 * g + 1 + dlt);
+                _idxObj24[6 * g + 4] = (uint)(4 * g + 2 + dlt);
+                _idxObj24[6 * g + 5] = (uint)(4 * g + 3 + dlt);
+            }
+            _verObj24.CopyTo(_vertices, vArrLen);
+            _idxObj24.CopyTo(_indices, iArrLen);
+            vArrLen += _verObj24.Length; iArrLen += _idxObj24.Length;
+            dLen.Add("Obj24", _idxObj24.Length); dPtr.Add("Obj24", ptr);//顶点索引加入字典,
+            ptr += (_idxObj24.Length * 4);//为下一曲面体提供指针偏移量
+            #endregion
+
+            /*----------By daode1212 , 2021-01-24------------*/
